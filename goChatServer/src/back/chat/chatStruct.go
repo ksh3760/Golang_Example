@@ -4,8 +4,8 @@ type (
 	// Define the struct of chat event
 	Event struct {
 		EvtType   string // Event type
-		User      string // User name
-		Timestamp int    // Time value
+		User      string
+		Timestamp int
 		Text      string // Message text
 	}
 
