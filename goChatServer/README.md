@@ -5,5 +5,5 @@ This is a real time chat server using socket.io
 - 웹 디자인 수정
 - 채팅 내용 로그 기록
 - 코드 개선
-- 미니 게임 추가
+- 미니 게임 추가  
 ===

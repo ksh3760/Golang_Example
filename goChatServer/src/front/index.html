@@ -5,8 +5,27 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
 </head>
 <body>
+    <div class="container">
+        <div class="row">
+            <!-- 대화창 -->
+            <div class="" id="messageList"></div>
+        </div>
+        <div class="row">
+            <!-- 메세지 입력창 -->
+            <div id="inputBox">
+                <input type="text" class="" id="message" placeholder="Message">
+                <span>
+                    <button class="" id="send" type="button">SEND</button>
+                </span>
+            </div>
+        </div>
+    </div>
     
+    <script src="script/script.js"></script>
 </body>
 </html>
