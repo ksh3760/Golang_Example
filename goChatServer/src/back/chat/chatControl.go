@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	Subscribe   = make(chan (chan<- Subscription), 10) // 구독 채널
-	Unsubscribe = make(chan (<-chan Event), 10)        // 구독 해지 채널
-	Publish     = make(chan Event, 10)                 // 이벤트 발행 채널
+	gSubscribe   = make(chan (chan<- Subscription), 10) // 구독 채널
+	gUnsubscribe = make(chan (<-chan Event), 10)        // 구독 해지 채널
+	gPublish     = make(chan Event, 10)                 // 이벤트 발행 채널
 )
 
 func Chat() {
@@ -56,7 +56,7 @@ func Chat() {
 		go func() {
 			for {
 				select {
-				case event := s.New: // 채널에 이벤트가 들어오면 이벤트 데이터를 웹 브라우저에 보냄
+				case event := <-s.New: // 채널에 이벤트가 들어오면 이벤트 데이터를 웹 브라우저에 보냄
 					so.Emit("event", event)
 				case msg := <-newMessages: //  웹 브라우저에서 채팅 메세지를 보내오면 채팅 메세지 이벤트 발생
 					Say(so.Id(), msg)
@@ -79,17 +79,19 @@ func NewEvent(evtType, user, msg string) Event {
 
 // 새로운 사용자가 들어왔을 때 이벤트를 구독할 함수
 func Subscribe() Subscription {
+	var (
+		sCh = make(chan Subscription)
+	)
 	// 채널을 생성하여 구독 채널에 보낸다
-	sCh := make(chan Subscription)
-	subscribe <- ch
+	subscribe <- sCh
 
-	return <-ch
+	return <-sCh
 
 } // end func Subscribe
 
 // 사용자가 나갔을 때 구독을 취소할 함수
 func (s Subscription) Cancel() {
-	unsubscribe <- s.New // 구독 해지 채널에 보냄
+	gUnsubscribe <- s.New // 구독 해지 채널에 보냄
 
 	for {
 		select {
@@ -106,27 +108,29 @@ func (s Subscription) Cancel() {
 
 // 사용자가 들어왔을 때 이벤트 발행
 func Join(user string) {
-	publish <- NewEvent("join", user, "")
+	gPublish <- NewEvent("join", user, "")
 } // end func Join
 
 // 사용자가 채팅 메세지를 보냈을 때 이벤트 발생
 func Say(user, message string) {
-	publish <- NewEvent("message", user, message)
+	gPublish <- NewEvent("message", user, message)
 }
 
 // 사용자가 나갔을 때 이벤트 발행
 func Leave(user string) {
-	publish <- NewEvent("leave", user, "")
+	gPublish <- NewEvent("leave", user, "")
 }
 
 // 구독, 구독 해지, 발행된 이벤트를 처리할 함수
 func Chatroom() {
-	archive := list.New()     // 쌓인 이벤트를 저장할 연결 리스트
-	subscrivers := list.New() // 구독자 목록을 저장할 연결 리스트
+	var (
+		archive     *list.List = list.New() // 쌓인 이벤트를 저장할 연결 리스트
+		subscribers *list.List = list.New() // 구독자 목록을 저장할 연결 리스트
+	)
 
 	for {
 		select {
-		case c := <-subscribe: // 새로운 사용자가 들어왔을 때
+		case c := <-gSubscribe: // 새로운 사용자가 들어왔을 때
 			var events []Event
 			for e := archive.Front(); e != nil; e = e.Next() { // 쌓인 이벤트가 있다면
 				// events 슬라이스에 이벤트를 저장
@@ -137,7 +141,7 @@ func Chatroom() {
 			subscribers.PushBack(subscriber)      // 이벤트 채널을 구독자 목록에 추가
 			c <- Subscription{events, subscriber} // 구독 구조체 인스턴스를 생성하여 채널 c에 보냄
 
-		case event := <-Publish: // 새 이벤트가 발행되었을 때
+		case event := <-gPublish: // 새 이벤트가 발행되었을 때
 			// 모든 사용자에게 이벤트 전달
 			for e := subscribers.Front(); e != nil; e = e.Next() {
 				// 구독자 목록에서 이벤트 채널을 꺼냄
@@ -152,7 +156,7 @@ func Chatroom() {
 			}
 			archive.PushBack(event) // 현재 이벤트를 저장
 
-		case C := <-unsubscribe: // 사용자가 나갔을 때
+		case C := <-gUnsubscribe: // 사용자가 나갔을 때
 			for e := subscribers.Front(); e != nil; e = e.Next() {
 				subscriber := e.Value.(chan Event) // 구독자 목록에서 이벤트 채널을 꺼낸다.
 
