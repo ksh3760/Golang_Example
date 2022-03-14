@@ -83,7 +83,7 @@ func Subscribe() Subscription {
 		sCh = make(chan Subscription)
 	)
 	// 채널을 생성하여 구독 채널에 보낸다
-	subscribe <- sCh
+	gSubscribe <- sCh
 
 	return <-sCh
 
@@ -156,12 +156,12 @@ func Chatroom() {
 			}
 			archive.PushBack(event) // 현재 이벤트를 저장
 
-		case C := <-gUnsubscribe: // 사용자가 나갔을 때
+		case c := <-gUnsubscribe: // 사용자가 나갔을 때
 			for e := subscribers.Front(); e != nil; e = e.Next() {
 				subscriber := e.Value.(chan Event) // 구독자 목록에서 이벤트 채널을 꺼낸다.
 
 				if subscriber == c { // 구독자 목록에 들어 있는 이벤트와 채널 c가 같으면 구독자 목록에서 삭제
-					subscriber.Remove(e)
+					subscribers.Remove(e)
 					break
 				}
 
