@@ -3,7 +3,6 @@ package chat
 import (
 	"container/list"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -17,53 +16,62 @@ var (
 )
 
 func Chat() {
-	server, err := socketio.NewServer(nil) // socket.io 초기화
-	if err != nil {
-		fmt.Println("socketio error >> ", err)
-		log.Fatal(err)
-	}
+	var (
+		server *socketio.Server
+	)
+	server = socketio.NewServer(nil) // socket.io 초기화
+	// if err != nil {
+	// 	fmt.Println("socketio error >> ", err)
+	// 	log.Fatal(err)
+	// }
 
 	go Chatroom() // 채팅방을 처리할 함수 고루틴으로 실행
 
+	server.OnConnect("/", func(s socketio.Conn) error {
+		s.SetContext("")
+		fmt.Println("connected:", s.ID())
+		return nil
+	})
+
 	// 웹 브라우저에서 socket.io로 접속했을 때 실행할 콜백 설정
-	server.On("connection", func(so socketio.Socket) {
-		// 웹 브라우저가 접속되면
-		s := Subscribe() // 구독 처리
-		Join(so.Id())    // 사용자가 채팅방에 들어왔다는 이벤트 발생
+	// server.On("connection", func(so socketio.Socket) {
+	// 	// 웹 브라우저가 접속되면
+	// 	s := Subscribe() // 구독 처리
+	// 	Join(so.Id())    // 사용자가 채팅방에 들어왔다는 이벤트 발생
 
-		for _, event := range s.Archive { // 지금까지 쌓인 이벤트를 웹 브라우저로 접속한 사용자에게 보냄
-			so.Emit("event", event)
-		}
+	// 	for _, event := range s.Archive { // 지금까지 쌓인 이벤트를 웹 브라우저로 접속한 사용자에게 보냄
+	// 		so.Emit("event", event)
+	// 	}
 
-		newMessages := make(chan string)
+	// 	newMessages := make(chan string)
 
-		// 웹 브라우저에서 보내오는 채팅 메세지를 받을 수 있도록 콜백 설정
-		so.On("message", func(msg string) {
-			newMessages <- msg
-		})
+	// 	// 웹 브라우저에서 보내오는 채팅 메세지를 받을 수 있도록 콜백 설정
+	// 	so.On("message", func(msg string) {
+	// 		newMessages <- msg
+	// 	})
 
-		// 웹 브라우저에서 보내오는 채팅 메세지를 받을 수 있도록 콜백 설정
-		so.On("message", func(msg string) {
-			newMessages <- msg
-		})
+	// 	// 웹 브라우저에서 보내오는 채팅 메세지를 받을 수 있도록 콜백 설정
+	// 	so.On("message", func(msg string) {
+	// 		newMessages <- msg
+	// 	})
 
-		// 웹 브라우저의 접속이 끊어졌을 때 콜백 설정
-		so.On("disconnnection", func() {
-			Leave(so.Id())
-			s.Cancel()
-		})
+	// 	// 웹 브라우저의 접속이 끊어졌을 때 콜백 설정
+	// 	so.On("disconnnection", func() {
+	// 		Leave(so.Id())
+	// 		s.Cancel()
+	// 	})
 
-		go func() {
-			for {
-				select {
-				case event := <-s.New: // 채널에 이벤트가 들어오면 이벤트 데이터를 웹 브라우저에 보냄
-					so.Emit("event", event)
-				case msg := <-newMessages: //  웹 브라우저에서 채팅 메세지를 보내오면 채팅 메세지 이벤트 발생
-					Say(so.Id(), msg)
-				}
-			}
-		}()
-	}) // end server.On
+	// 	go func() {
+	// 		for {
+	// 			select {
+	// 			case event := <-s.New: // 채널에 이벤트가 들어오면 이벤트 데이터를 웹 브라우저에 보냄
+	// 				so.Emit("event", event)
+	// 			case msg := <-newMessages: //  웹 브라우저에서 채팅 메세지를 보내오면 채팅 메세지 이벤트 발생
+	// 				Say(so.Id(), msg)
+	// 			}
+	// 		}
+	// 	}()
+	// }) // end server.On
 
 	http.Handle("/socket.io/", server) // /socket.io/ 경로는 socket.to 인스턴스가 처리하도록 설정
 
