@@ -1,0 +1,8 @@
+{
+    "title" : "Mail title",
+    "content" : "Mail content",
+    "recipient" : [
+        "john.doe@gmail.com",
+        "john.smith@gmail.com"
+    ]
+}
