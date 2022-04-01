@@ -10,15 +10,15 @@ import (
 
 var (
 	// smtp setting
-	gEmailId  string = "" // smtp 사용자 email
-	gEmailPw  string = "" // smtp 사용자 password
-	gSmtpHost string = "" // smtp 호스트 (smtp.gmail.com)
-	gSmtpPort string = "" // smtp 포트 (587)
+	gEmailId  string = "" // smtp sender email
+	gEmailPw  string = "" // smtp sender password
+	gSmtpHost string = "" // smtp host (smtp.gmail.com)
+	gSmtpPort string = "" // smtp port (587)
 
 	// email setting
-	gMailTitle     string   = ""         // email 제목
-	gMailContent   string   = ""         // email 내용
-	gMailRecipient []string = []string{} // email 수신자
+	gMailTitle     string   = ""         // email title
+	gMailContent   string   = ""         // email content
+	gMailRecipient []string = []string{} // email recipient
 )
 
 type (
