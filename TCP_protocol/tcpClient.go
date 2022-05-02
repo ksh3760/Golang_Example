@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"time"
 )
 
@@ -20,6 +19,8 @@ func main() {
 		sNum    int
 		sStr    string
 	)
+
+	fmt.Println("TCP port : ", G_IP+G_PORT)
 
 	sClient, sErr = net.Dial("tcp", G_IP+G_PORT) // TCP 프로토콜
 	if sErr != nil {
@@ -40,6 +41,7 @@ func main() {
 				return
 			}
 
+			fmt.Println("aCon : ", aCon)
 			fmt.Println(string(sData[:sNum])) // 데이터 출력
 
 			time.Sleep(1 * time.Second)
@@ -50,7 +52,9 @@ func main() {
 	go func(aCon net.Conn) {
 		cnt := 0
 		for {
-			sStr = "Hello" + strconv.Itoa(cnt)
+			fmt.Println("input ur msg")
+			fmt.Scanln(&sStr)
+			// sStr = "Hello" + strconv.Itoa(cnt)
 
 			_, sErr := aCon.Write([]byte(sStr)) // 서버로 데이터를 보냄
 			if sErr != nil {
@@ -64,4 +68,5 @@ func main() {
 	}(sClient)
 
 	fmt.Scanln()
-}
+
+} // end func main()
