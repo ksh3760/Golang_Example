@@ -1,3 +1,6 @@
+// ======================================
+// Golang tcp client example test
+// ======================================
 package main
 
 import (
@@ -13,10 +16,11 @@ const (
 
 func main() {
 	var (
-		sStr string
-		aCon net.Conn
-		sErr error
-		sNum int
+		sStr  string
+		aCon  net.Conn
+		sErr  error
+		sNum  int
+		sData []byte
 	)
 
 	aCon, sErr = net.Dial("tcp", G_PORT)
@@ -27,16 +31,16 @@ func main() {
 	log.Println("port : ", G_PORT)
 
 	go func() {
-		data := make([]byte, 4096)
+		sData = make([]byte, 4096)
 
 		for {
-			sNum, sErr = aCon.Read(data)
+			sNum, sErr = aCon.Read(sData)
 			if sErr != nil {
 				log.Println(sErr)
 				return
 			}
 
-			log.Println("Server send : " + string(data[:sNum]))
+			log.Println("Server send : " + string(sData[:sNum]))
 			time.Sleep(time.Duration(3) * time.Second)
 		}
 	}()
