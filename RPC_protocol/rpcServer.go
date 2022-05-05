@@ -21,6 +21,11 @@ type Reply struct {
 	C int
 }
 
+const (
+	G_IP   string = "127.0.0.1"
+	G_PORT string = ":8081"
+)
+
 func main() {
 	var (
 		sErr error = nil
@@ -29,8 +34,8 @@ func main() {
 	)
 
 	// rpc 서버에서 함수가 처리될 수 있도록 등록을 해주고, TCP 연결을 받을 준비를 한다.
-	rpc.Register(new(Calc))               // Calc 타입의 인스턴스를 생성하여 RPC 서버에 등록
-	ln, sErr = net.Listen("tcp", ":8081") // TCP 프로토콜에 6000번 포트로 연결을 받음
+	rpc.Register(new(Calc))              // Calc 타입의 인스턴스를 생성하여 RPC 서버에 등록
+	ln, sErr = net.Listen("tcp", G_PORT) // TCP 프로토콜에 지정한 포트로 연결 받음
 	if sErr != nil {
 		fmt.Println(sErr)
 		return

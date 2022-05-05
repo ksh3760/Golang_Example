@@ -18,8 +18,13 @@ type Reply struct {
 	C int
 }
 
+const (
+	// G_IP   string = "127.0.0.1"
+	G_PORT string = ":8081"
+)
+
 func main() {
-	client, err := rpc.Dial("tcp", "127.0.0.1:8081") // RPC 서버에 연결
+	client, err := rpc.Dial("tcp", G_PORT) // RPC 서버에 연결
 	if err != nil {
 		fmt.Println(err)
 		return
