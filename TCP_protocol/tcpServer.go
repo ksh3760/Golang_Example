@@ -8,6 +8,8 @@ import (
 	"net"
 )
 
+// 포트만 설정하면 모든 NIC의 IP 주소에서 연결을 받는다.
+// IP 주소와 포트를 설정하면 특정 NIC에서만 TCP 연결을 받는다.
 const (
 	G_IP   string = "127.0.0.1"
 	G_PORT string = ":8081"
