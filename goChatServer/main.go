@@ -1,4 +1,4 @@
-package chat
+package main
 
 import (
 	"container/list"
@@ -9,11 +9,33 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 )
 
-var (
-	gSubscribe   = make(chan (chan<- Subscription), 10) // 구독 채널
-	gUnsubscribe = make(chan (<-chan Event), 10)        // 구독 해지 채널
-	gPublish     = make(chan Event, 10)                 // 이벤트 발행 채널
+type (
+	// Define the struct of chat event
+	Event struct {
+		EvtType   string // Event type
+		User      string
+		Timestamp int
+		Text      string // Message text
+	}
+
+	// Define the struct of subscription
+	Subscription struct {
+		Archive []Event      // 지금까지 쌓인 이벤트를 저장할 슬라이스
+		New     <-chan Event // 새 이벤트가 생길 때마다 데이터를 받을 수 있도록 이벤트 채널 생성
+	}
 )
+
+var (
+	G_SUBSCRIBE   = make(chan (chan<- Subscription), 10) // 구독 채널
+	G_UNSUBSCRIBE = make(chan (<-chan Event), 10)        // 구독 해지 채널
+	G_PUBLISH     = make(chan Event, 10)                 // 이벤트 발행 채널
+)
+
+func main() {
+	fmt.Println("chat server on")
+	fmt.Println("port : ")
+	Chat()
+} // end func main()
 
 func Chat() {
 	var (
@@ -91,7 +113,7 @@ func Subscribe() Subscription {
 		sCh = make(chan Subscription)
 	)
 	// 채널을 생성하여 구독 채널에 보낸다
-	gSubscribe <- sCh
+	G_SUBSCRIBE <- sCh
 
 	return <-sCh
 
@@ -99,7 +121,7 @@ func Subscribe() Subscription {
 
 // 사용자가 나갔을 때 구독을 취소할 함수
 func (s Subscription) Cancel() {
-	gUnsubscribe <- s.New // 구독 해지 채널에 보냄
+	G_UNSUBSCRIBE <- s.New // 구독 해지 채널에 보냄
 
 	for {
 		select {
@@ -116,17 +138,17 @@ func (s Subscription) Cancel() {
 
 // 사용자가 들어왔을 때 이벤트 발행
 func Join(user string) {
-	gPublish <- NewEvent("join", user, "")
+	G_PUBLISH <- NewEvent("join", user, "")
 } // end func Join
 
 // 사용자가 채팅 메세지를 보냈을 때 이벤트 발생
 func Say(user, message string) {
-	gPublish <- NewEvent("message", user, message)
+	G_PUBLISH <- NewEvent("message", user, message)
 }
 
 // 사용자가 나갔을 때 이벤트 발행
 func Leave(user string) {
-	gPublish <- NewEvent("leave", user, "")
+	G_PUBLISH <- NewEvent("leave", user, "")
 }
 
 // 구독, 구독 해지, 발행된 이벤트를 처리할 함수
@@ -138,7 +160,7 @@ func Chatroom() {
 
 	for {
 		select {
-		case c := <-gSubscribe: // 새로운 사용자가 들어왔을 때
+		case c := <-G_SUBSCRIBE: // 새로운 사용자가 들어왔을 때
 			var events []Event
 			for e := archive.Front(); e != nil; e = e.Next() { // 쌓인 이벤트가 있다면
 				// events 슬라이스에 이벤트를 저장
@@ -149,7 +171,7 @@ func Chatroom() {
 			subscribers.PushBack(subscriber)      // 이벤트 채널을 구독자 목록에 추가
 			c <- Subscription{events, subscriber} // 구독 구조체 인스턴스를 생성하여 채널 c에 보냄
 
-		case event := <-gPublish: // 새 이벤트가 발행되었을 때
+		case event := <-G_PUBLISH: // 새 이벤트가 발행되었을 때
 			// 모든 사용자에게 이벤트 전달
 			for e := subscribers.Front(); e != nil; e = e.Next() {
 				// 구독자 목록에서 이벤트 채널을 꺼냄
@@ -164,7 +186,7 @@ func Chatroom() {
 			}
 			archive.PushBack(event) // 현재 이벤트를 저장
 
-		case c := <-gUnsubscribe: // 사용자가 나갔을 때
+		case c := <-G_UNSUBSCRIBE: // 사용자가 나갔을 때
 			for e := subscribers.Front(); e != nil; e = e.Next() {
 				subscriber := e.Value.(chan Event) // 구독자 목록에서 이벤트 채널을 꺼낸다.
 
